@@ -1,0 +1,251 @@
+# Amazon ML Challenge 2025 - Configuration File
+
+# Data paths
+data:
+  train_csv: "dataset/train.csv"
+  test_csv: "dataset/test.csv"
+  sample_test_csv: "dataset/sample_test.csv"
+  
+  # Image directories
+  img_train: "dataset/images/train"
+  img_test: "dataset/images/test"
+  img_val: "dataset/images/val"
+  
+  # Feature directories
+  feats_dir: "dataset/features"
+  
+  # Output directories
+  output_dir: "output"
+  ckpt_dir: "output/checkpoints"
+  logs_dir: "output/logs"
+  submission_dir: "submissions"
+
+# Model configuration
+model:
+  # Model architecture
+  model_name: "multimodal_fusion"
+  
+  # Text encoder settings
+  text_model: "mistralai/Mistral-7B-v0.1"
+  text_max_length: 512
+  text_embedding_dim: 4096
+  text_use_4bit: true
+  text_use_lora: true
+  text_lora_r: 64
+  text_lora_alpha: 128
+  text_lora_dropout: 0.1
+  
+  # Image encoder settings
+  image_model: "openai/clip-vit-large-patch14"
+  image_size: 224
+  image_embedding_dim: 1024
+  image_use_4bit: false
+  image_use_lora: true
+  image_lora_r: 32
+  image_lora_alpha: 64
+  image_lora_dropout: 0.1
+  
+  # Fusion model settings
+  fusion_hidden_dims: [2048, 1024, 512, 256]
+  fusion_dropout: 0.3
+  fusion_use_attention: true
+  fusion_attention_heads: 8
+  fusion_use_residual: true
+  
+  # Output settings
+  num_outputs: 1
+
+# Training configuration
+training:
+  # Cross-validation
+  num_folds: 5
+  fold_seed: 42
+  stratify_column: "price_bin"
+  
+  # Training parameters (A100 Optimized)
+  batch_size: 8       # Reduced to prevent hangs (was 16)
+  val_batch_size: 16  # Reduced validation batch size
+  num_epochs: 12       # Slightly more epochs with better hardware
+  learning_rate: 3e-5  # Higher LR for larger batch size
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  
+  # Memory optimization (A100 specific)
+  gradient_accumulation_steps: 2  # Reduced due to larger batch size
+  max_grad_norm: 1.0
+  gradient_checkpointing: false   # A100 has enough memory
+  memory_efficient_training: true
+  dynamic_batch_sizing: true
+  use_bf16: true                  # BF16 for A100
+  compile_model: true             # PyTorch 2.0 compile
+  use_flash_attention: true       # Flash attention for efficiency
+  
+  # Scheduler settings
+  scheduler: "cosine"  # cosine, linear, polynomial
+  scheduler_warmup_steps: 0
+  
+  # Optimization
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  
+  # Mixed precision (A100 optimized)
+  mixed_precision: true
+  precision_mode: "bf16"  # Best for A100
+  
+  # Early stopping
+  early_stopping_patience: 3
+  early_stopping_min_delta: 0.001
+  
+  # Checkpointing
+  save_strategy: "best"  # best, epoch, steps
+  save_total_limit: 3
+  
+  # Evaluation
+  eval_strategy: "epoch"  # epoch, steps
+  eval_steps: 500
+  logging_steps: 50
+
+# Loss configuration
+loss:
+  # Primary loss
+  loss_type: "combined"  # smape, mse, combined, focal_smape
+  
+  # Combined loss weights
+  smape_weight: 0.7
+  mse_weight: 0.3
+  
+  # Focal SMAPE parameters
+  focal_alpha: 2.0
+  focal_gamma: 2.0
+
+# Data processing
+data_processing:
+  # Feature engineering
+  use_advanced_features: true
+  use_text_features: true
+  use_image_features: true
+  
+  # Text processing
+  clean_text: true
+  extract_specs: true
+  extract_brand: true
+  extract_color: true
+  extract_size: true
+  
+  # Image processing
+  extract_image_stats: true
+  detect_text_in_image: false  # Requires OCR setup
+  
+  # Price preprocessing
+  price_transform: "log1p"  # none, log, log1p, sqrt
+  price_clip_percentiles: [0.1, 99.9]
+  
+  # Data augmentation
+  text_augmentation: false
+  image_augmentation: true
+  augmentation_prob: 0.3
+
+# Inference configuration
+inference:
+  # Ensemble settings
+  ensemble_methods: ["weighted_average", "median", "stacking"]
+  ensemble_weights: "inverse_smape"  # uniform, inverse_smape, softmax, rank
+  use_stacking: true
+  
+  # Post-processing
+  post_process: true
+  post_process_strength: 0.3
+  use_ml_postprocessing: true
+  confidence_threshold: 0.7
+  
+  # TTA (Test Time Augmentation)
+  tta_enabled: false
+  tta_rounds: 5
+
+# System configuration
+system:
+  # Hardware
+  device: "auto"  # auto, cuda, cpu
+  num_workers: 0  # Set to 0 to prevent multiprocessing hangs
+  pin_memory: false  # Disable to avoid memory issues
+  
+  # Reproducibility
+  seed: 42
+  deterministic: false
+  
+  # Logging
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  wandb_project: "amazon-ml-2025"
+  wandb_run_name: null
+  wandb_tags: ["multimodal", "price-prediction"]
+  
+  # Memory optimization
+  gradient_checkpointing: true
+  dataloader_pin_memory: true
+  empty_cache_steps: 100
+
+# Validation configuration
+validation:
+  # Metrics to track
+  primary_metric: "smape"
+  track_metrics: ["smape", "mae", "mse", "r2"]
+  
+  # Price range analysis
+  price_ranges:
+    low: [0, 50]
+    medium: [50, 200]
+    high: [200, 1000000]
+  
+  # Visualization
+  create_plots: true
+  plot_predictions: true
+  plot_errors: true
+  plot_residuals: true
+
+# Feature extraction configuration
+features:
+  # IPQ extraction
+  ipq_patterns:
+    - "pack of (\\d+)"
+    - "(\\d+) pack"
+    - "(\\d+)\\s*x\\s*"
+    - "quantity:?\\s*(\\d+)"
+    - "count:?\\s*(\\d+)"
+  
+  # Brand patterns
+  brand_patterns:
+    - "by ([A-Z][A-Za-z]+)"
+    - "brand:?\\s*([A-Z][A-Za-z]+)"
+    - "^([A-Z][A-Za-z]+)\\s"
+  
+  # Category mappings
+  category_keywords:
+    electronics: ["phone", "laptop", "tablet", "camera", "headphones", "speaker"]
+    clothing: ["shirt", "pants", "dress", "shoes", "jacket", "hat"]
+    food: ["snack", "drink", "coffee", "tea", "chocolate", "candy"]
+    home: ["furniture", "decor", "kitchen", "bathroom", "bedroom"]
+    sports: ["fitness", "exercise", "sport", "outdoor", "running"]
+    beauty: ["makeup", "skincare", "perfume", "beauty", "cosmetic"]
+    toys: ["toy", "game", "puzzle", "doll", "action figure"]
+    books: ["book", "novel", "guide", "manual", "textbook"]
+  
+  # Text features
+  text_stats:
+    - "length"
+    - "word_count"
+    - "sentence_count"
+    - "avg_word_length"
+    - "uppercase_ratio"
+    - "digit_ratio"
+    - "special_char_ratio"
+  
+  # Image features  
+  image_stats:
+    - "width"
+    - "height"
+    - "aspect_ratio"
+    - "brightness"
+    - "contrast"
+    - "file_size"

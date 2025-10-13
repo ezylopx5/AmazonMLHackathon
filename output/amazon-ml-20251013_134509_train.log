@@ -1,0 +1,38 @@
+============================================================
+🚀 Amazon ML Challenge 2025 - Training Pipeline
+============================================================
+📋 Config: configs/config.yaml
+📁 Features: dataset/features
+📁 Output: /teamspace/studios/this_studio/output
+🔢 Folds: 5
+🤖 Model: both
+
+📦 Checking dependencies...
+✅ All dependencies available
+
+📚 Loading modules...
+✅ Modules loaded successfully
+
+💾 Checkpoints will be saved to: /teamspace/studios/this_studio/output/checkpoints
+
+📊 Loading features...
+✅ Loaded train features: (75000, 95)
+✅ Loaded test features: (75000, 94)
+
+🎯 Starting training...
+This will take some time...
+
+📈 Training XGBoost...
+Training XGBoost with 5-fold CV...
+  Fold 1/5...
+❌ Training failed: XGBModel.fit() got an unexpected keyword argument 'early_stopping_rounds'
+Traceback (most recent call last):
+  File "/teamspace/studios/this_studio/src/__main__.py", line 165, in main
+    xgb_scores, xgb_predictions = train_xgboost_cv(
+                                  ^^^^^^^^^^^^^^^^^
+  File "/teamspace/studios/this_studio/src/train_simple.py", line 65, in train_xgboost_cv
+    model.fit(
+  File "/home/zeus/miniconda3/envs/cloudspace/lib/python3.12/site-packages/xgboost/core.py", line 729, in inner_f
+    return func(**kwargs)
+           ^^^^^^^^^^^^^^
+TypeError: XGBModel.fit() got an unexpected keyword argument 'early_stopping_rounds'
